@@ -20,7 +20,7 @@ async def adjust_xvals(symbol, bids, asks, mm=12):
     dx = (b - a) / (mm-1)
     return ['${0:.2f}'.format((a + i*dx)) if symbol in ['XBTUSD'] else '{0:.8f}'.format(a+i*dx) for i in range(mm)]
 
-async def sendbook(conn, books, tick_limit=30, depth_limit=30):
+async def sendbook(conn, books, tick_limit=50, depth_limit=30):
     global outgrid
 
     vv = 12
@@ -42,7 +42,7 @@ async def sendbook(conn, books, tick_limit=30, depth_limit=30):
         print('Sending message size: {} | Subscribed to : {}; {}'.format(len(meshgrider), len(outgrid.keys()), outgrid.keys()), end='\n\n')
         #if ticker in ['XBTUSD','ETHUSD','LTCM19','XRPM19','ADAM19','EOSM19','XBT7D_U105','TRXM19','BCHM19']:
         await conn.send(json.dumps({'Symbol':ticker, 'X': xticks[ticker], 'Data':meshgrider, 'TV': list(reversed(tickvals))}))
-        await asyncio.sleep(1)
+        await asyncio.sleep(10)
 
 async def parse(msg):
     global outgrid
@@ -109,7 +109,7 @@ async def start(conn, path):
                 await parse(resp)
                 if sync:
                     await sendbook(conn, books)
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(10)
             except Exception as e:
                 print('Error: {}'.format(e))
                 
