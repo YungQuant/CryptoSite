@@ -61,9 +61,9 @@ class App extends Component {
                      colorscale: 'Jet',
                      type: 'surface'}
                   ]}
-                  layout={{width: 800,
-                          height: 800,
+                  layout={{
                           autosize: true,
+                          responsive: true,
                           title: {
                             text: XBTA,
                             font: {

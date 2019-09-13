@@ -23,7 +23,7 @@ async def adjust_xvals(symbol, bids, asks, mm=12):
 async def sendbook(conn, books, tick_limit=10, depth_limit=10):
     global outgrid
 
-    vv = 12
+    vv = 420
 
     for u, v in books.items():
         bids, asks = books[u]['Bids'].sort_values(by='PRICE', ascending=True).values[:tick_limit], books[u]['Asks'].sort_values(by='PRICE', ascending=True).values[:tick_limit]
