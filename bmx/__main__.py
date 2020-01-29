@@ -18,17 +18,17 @@ async def adjust_xvals(symbol, bids, asks, mm=12):
     asks = [uu[1] for uu in asks]
     a, b = np.min(bids), np.max(asks)
     dx = (b - a) / (mm-1)
-    return ['${0:.2f}'.format(a + i*dx) if symbol in ['XBTUSD','ETHUSD','XBTM19','XBTU19','XBTZ19'] else '{0:.8f}'.format(a+i*dx) for i in range(mm)]
+    return ['${0:.2f}'.format((a + i*dx)) if symbol in ['XBTUSD'] else '{0:.8f}'.format(a+i*dx) for i in range(mm)]
 
-async def sendbook(conn, books, tick_limit=30, depth_limit=30):
+async def sendbook(conn, books, tick_limit=10, depth_limit=10):
     global outgrid
 
-    vv = 12
+    vv = 420
 
     for u, v in books.items():
         bids, asks = books[u]['Bids'].sort_values(by='PRICE', ascending=True).values[:tick_limit], books[u]['Asks'].sort_values(by='PRICE', ascending=True).values[:tick_limit]
-        cbids = [np.sum([uu[1]*uu[2] for uu in bids[:mm]]) for mm in range(len(bids))]
-        casks = [np.sum([uu[1]*uu[2] for uu in asks[:mm]]) for mm in range(len(asks))]
+        cbids = [np.sum([uu[1]*uu[2] for uu in bids[:mm]])/1000 for mm in range(len(bids))]
+        casks = [np.sum([uu[1]*uu[2] for uu in asks[:mm]])/1000 for mm in range(len(asks))]
         outgrid[u].append(list(reversed(cbids)) + casks)
         xticks[u] = await adjust_xvals(u, bids, asks, mm=vv)
         if len(outgrid[u]) > depth_limit + 10:
@@ -42,7 +42,7 @@ async def sendbook(conn, books, tick_limit=30, depth_limit=30):
         print('Sending message size: {} | Subscribed to : {}; {}'.format(len(meshgrider), len(outgrid.keys()), outgrid.keys()), end='\n\n')
         #if ticker in ['XBTUSD','ETHUSD','LTCM19','XRPM19','ADAM19','EOSM19','XBT7D_U105','TRXM19','BCHM19']:
         await conn.send(json.dumps({'Symbol':ticker, 'X': xticks[ticker], 'Data':meshgrider, 'TV': list(reversed(tickvals))}))
-        await asyncio.sleep(0.1)
+        #await asyncio.sleep(10)
 
 async def parse(msg):
     global outgrid
@@ -102,21 +102,21 @@ async def parse(msg):
 async def start(conn, path):
     global sync
     print('Connected to BitMEX Socket')
-    async with websockets.connect('wss://www.bitmex.com/realtime?subscribe=orderBookL2_25') as ws:
+    async with websockets.connect('wss://www.bitmex.com/realtime?subscribe=orderBookL2_25:XBTUSD') as ws:
         while True:
             try:
                 resp = json.loads(await ws.recv())
                 await parse(resp)
                 if sync:
                     await sendbook(conn, books)
-                    #await asyncio.sleep(3.75)
+                    #await asyncio.sleep(10)
             except Exception as e:
                 print('Error: {}'.format(e))
                 
 
 
 
-def connect(host='localhost', port='5678'):
+def connect(host='127.0.0.1', port='5678'):
     server = websockets.serve(start, host, port)
     loop.run_until_complete(server)
     loop.run_forever()
